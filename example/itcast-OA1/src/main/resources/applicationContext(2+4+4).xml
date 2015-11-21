@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!--自动扫描包的范围，该注解解析器包含了两个功能：依赖注入和类扫描符的识别 -->
+	<context:component-scan base-package=".." />
+	<!-- 对注解提供支持(识别注解) -->
+	<context:annotation-config />
+	<!--读取属性文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+	<!--数据源 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${db.driver}" />
+		<property name="jdbcUrl" value="${db.url}" />
+		<property name="user" value="${db.username}" />
+		<property name="password" value="${db.password}" />
+		<property name="maxPoolSize" value="${db.maxPoolSize}" />
+		<property name="minPoolSize" value="${db.minPoolSize}" />
+		<property name="initialPoolSize" value="${db.initialPoolSize}" />
+		<property name="maxIdleTime" value="${db.maxIdleTime}" />
+	</bean>
+
+	<!-- 整合 HIBERNATE配置 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.jdbc.batch_size">50</prop>
+                <prop key="hibernate.hibernate.connection.SetBigStringTryClob">true</prop>
+                <prop key="hibernate.hibernate.archive.autodetection">class</prop>
+                <prop key="hibernate.hibernate.connection.charSet">UTF-8</prop>
+                <prop key="hibernate.hibernate.cache.use_query_cache">false</prop>
+                <prop key="hibernate.hibernate.cache.use_second_level_cache">false</prop>
+                <prop key="hibernate.hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
+			</props>
+		</property>
+		<!-- hibernate映射文件 -->
+		<property name="mappingDirectoryLocations">
+			<list>
+				<value>classpath:*.*.hbm.xml</value>
+				<value>classpath:cn/itcast/domain</value>
+			</list>
+		</property>
+		<!-- 加载jbpm jar包中的映射文件 -->
+		<!-- <property name="mappingJarLocations">
+			<list>
+				<value>/WEB-INF/lib/jbpm.jar</value>
+			</list>
+		</property> -->
+		<!-- <property name="packagesToScan">
+			<list>
+				<value>com.ssh.domain</value>
+			</list>
+		</property> -->
+	</bean>
+	<!-- 配置jbpm和spring框架整合的核心类 -->
+	<bean id="springHelper" class="org.jbpm.pvm.internal.processengine.SpringHelper">
+		<!-- 指定jbpm框架的核心配置文件 -->
+		<property name="jbpmCfg" value="jbpm.cfg.xml"></property>
+	</bean>
+	<!-- 配置ProcessEngine对象 -->
+	<bean id="processEngine" factory-bean="springHelper" factory-method="createProcessEngine" />
+	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" />
+    <bean id="executionService" factory-bean="processEngine" factory-method="getExecutionService" />
+    <bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService" />
+    <bean id="managementService" factory-bean="processEngine" factory-method="getManagementService" />
+    <bean id="taskService" factory-bean="processEngine" factory-method="getTaskService" />
+    <bean id="identityService" factory-bean="processEngine" factory-method="getIdentityService" /> 
+	
+	<!-- 事务配置 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<!-- 对@Transactional这个注解进行的驱动，这是基于注解的方式使用事务配置声明，这样在具体应用中可以指定对哪些方法使用事务。 -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+	<!-- 配置事务异常封装-->
+    <bean id="persistenceExceptionTranslationPostProcessor"
+          class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+          
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+            <tx:method name="add*" propagation="REQUIRED" />
+            <tx:method name="create*" propagation="REQUIRED" />
+            <tx:method name="insert*" propagation="REQUIRED" />
+            <tx:method name="update*" propagation="REQUIRED" />
+            <tx:method name="merge*" propagation="REQUIRED" />
+            <tx:method name="del*" propagation="REQUIRED" />
+            <tx:method name="remove*" propagation="REQUIRED" />
+            <tx:method name="put*" propagation="REQUIRED" />
+            <tx:method name="use*" propagation="REQUIRED"/>
+            <!--hibernate4必须配置为开启事务 否则 getCurrentSession()获取不到-->
+            <tx:method name="get*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="count*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="find*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="list*" propagation="REQUIRED" read-only="true" />
+            <tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<!-- 只对业务逻辑层实施事务 -->
+		<aop:pointcut expression="execution(* cn.itcast.service..*Impl.*(..))" id="point" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="point" />
+	</aop:config>
+
+
+</beans>

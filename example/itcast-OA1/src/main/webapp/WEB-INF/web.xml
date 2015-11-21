@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+	<!-- 配置解决session已经关闭问题 ，解决延迟加载问题的过滤器 -->
+	<filter>
+		<filter-name>hibernateFilter</filter-name>
+		<filter-class>
+			org.springframework.orm.hibernate3.support.OpenSessionInViewFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>hibernateFilter</filter-name>
+		<url-pattern>*.action</url-pattern>
+	</filter-mapping>
+
+
+	<!--添加struts2配置 -->
+	<filter>
+		<filter-name>struts2</filter-name>
+		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>struts2</filter-name>
+		<url-pattern>*.action</url-pattern>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+
+	<!--添加spring配置，项目启动时加载spring -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<!-- 通过上下文参数指定spring配置文件的位置 -->
+	<!-- 默认情况下，会加载WEB-INF/applicationContext.xml这个文件，我们可以通过配置contextConfigLocation参数改变配置文件的路径 -->
+	<!-- <context-param> <param-name>contextConfigLocation</param-name> <param-value>WEB-INF/classes/applicationContext.xml</param-value> 
+		</context-param> -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+	<!-- 自定义监听器必须要放在spring监听器后面，因为需要引用spring容器中的对象 -->
+	<listener>
+		<listener-class>cn.itcast.listener.OAInitListener</listener-class>
+	</listener>
+
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>

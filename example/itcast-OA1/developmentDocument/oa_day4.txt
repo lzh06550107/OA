@@ -1,0 +1,31 @@
+* 权限模块
+1）角色和权限的关系：多对多（一个角色是若干权限的集合，加入角色是为了简化赋给用户权限）
+2）权限有上下级关系
+
+* 权限对应的是某个功能，功能对应的是请求URL(本质是控制对某个路径的访问)
+* 设计权限实体
+
+* 开发权限模块步骤
+1）设计权限实体并编写hbm映射文件生成表
+2）通过一个SQL脚本导入权限数据
+3）为角色分配权限
+4）使用jQuery的treeview插件展示权限树
+	* 导入插件所需资源
+		<script language="javascript" src="${pageContext.request.contextPath}/script/jquery.js"></script>
+		<script type="text/javascript" src="${pageContext.request.contextPath }/script/jquery_treeview/jquery.treeview.js"></script>
+		<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath }/script/jquery_treeview/jquery.treeview.css">
+		<link type="text/css" rel="stylesheet" href="${pageContext.request.contextPath}/style/blue/file.css" />
+	* 通过ul和li标签展示数据
+	* 调用插件的treeview方法生成树
+5）权限树的选中效果
+	当选中某个权限时，同时选中其下级权限，当取消某个权限时，同时取消其下级权限
+	$(this).siblings('ul').find('input').attr('checked',this.checked);
+
+	当选中某个权限时，同时选中其直接上级权限
+	$(this).parents('li').children('input').attr('checked',true);
+
+	当取消某个权限时，如果同级权限都没有选中，则取消其上级权限
+	var size = $(this).parent('li').siblings('li').children('input:checked').size();
+	if(size == 0){
+		$(this).parent().parent().siblings('input').attr('checked',false);
+	}

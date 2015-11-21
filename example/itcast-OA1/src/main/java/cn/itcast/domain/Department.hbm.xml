@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="cn.itcast.domain.Department" table="itcast_department">
+		<id name="id">
+			<generator class="native"/>
+		</id>
+		<property name="name" length="32" />
+		<property name="description" length="128"/>
+		
+		<!-- 子部门和上级部门的多对一关系 -->	
+		<many-to-one name="parent" class="cn.itcast.domain.Department" column="parentId"/>
+		
+		<!-- 上级部门和子部门之间的一对多关系 -->
+		<!-- 调用getChildren()方法获取所有的子类，级联删除 -->
+		 <!-- 此处inverse设置为true，则关联的控制方交给了child，一对多关联一般都将控制方交给多端 -->
+		<set name="children" cascade="delete" inverse="true">
+			<key column="parentId" />
+			<one-to-many class="cn.itcast.domain.Department" />
+		</set>
+		
+		<!-- 部门和用户的一对多关系 -->
+		<set name="users">
+			<key column="departmentId"/>
+			<one-to-many class="cn.itcast.domain.User"/>		
+		</set>
+	</class>
+</hibernate-mapping>

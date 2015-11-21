@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+
+	<!-- 指定由spring负责action对象的创建 -->
+	<constant name="struts.objectFactory" value="spring" />
+	<!-- 指定表单的主题 -->
+	<constant name="struts.ui.theme" value="simple" />
+	<!-- 所有匹配*.action的请求都由struts2处理 -->
+	<constant name="struts.action.extension" value="action" />
+	<!-- 是否启用开发模式(开发时设置为true,发布到生产环境后设置为false) -->
+	<constant name="struts.devMode" value="true" />
+	<!-- struts配置文件改动后，是否重新加载(开发时设置为true,发布到生产环境后设置为false) -->
+	<constant name="struts.configuration.xml.reload" value="true" />
+	<!-- 设置浏览器是否缓存静态内容(开发时设置为false,发布到生产环境后设置为true) -->
+	<constant name="struts.serve.static.browserCache" value="false" />
+	<!-- 请求参数的编码方式 -->
+	<constant name="struts.i18n.encoding" value="utf-8" />
+	<!-- 每次HTTP请求系统都重新加载资源文件，有助于开发(开发时设置为true,发布到生产环境后设置为false) -->
+	<constant name="struts.i18n.reload" value="true" />
+	<!-- 文件上传最大值 -->
+	<constant name="struts.multipart.maxSize" value="104857600" />
+	<!-- 让struts2支持动态方法调用,使用叹号访问方法 -->
+	<constant name="struts.enable.DynamicMethodInvocation" value="true" />
+	<!-- Action名称中是否还是用斜线 -->
+	<constant name="struts.enable.SlashesInActionNames" value="false" />
+	<!-- 允许标签中使用表达式语法 -->
+	<constant name="struts.tag.altSyntax" value="true" />
+	<!-- 对于WebLogic,Orion,OC4J此属性应该设置成true -->
+	<constant name="struts.dispatcher.parametersWorkaround" value="false" />
+	<package name="basePackage" extends="struts-default">
+
+	</package>
+
+	<package name="default" namespace="/" extends="struts-default">
+		<interceptors>
+			<interceptor name="checkprivilege" class="cn.itcast.interceptor.CheckPrivilegeInterceptor"/>
+			<interceptor-stack name="mydefaultStack">
+			<interceptor-ref name="checkprivilege" />
+			<interceptor-ref name="defaultStack">
+				<!-- 渲染页面前刷新model在ValueStack的root的引用 -->
+				<param name="modelDriven.refreshModelBeforeResult">true</param>
+				<param name="params.excludeParams">dojo\..*,^struts\..*,^session\..*,^request\..*,^application\..*,^servlet(Request|Response)\..*,parameters\...*,x,y</param>
+			</interceptor-ref>
+			</interceptor-stack>
+		</interceptors>
+		
+		<!-- 此默认interceptor是针对所有action的 -->
+        <!-- 如果某个action中引入了interceptor, 则在这个action中此默认interceptor就会失效 -->
+        <default-interceptor-ref name="mydefaultStack"></default-interceptor-ref>
+        
+        <!-- 配置全局结果映射 -->
+        <global-results>
+        	<result name="loginUI">/WEB-INF/jsp/user/login.jsp</result>
+        	<result name="noPrivilegeUI">/WEB-INF/jsp/public/noPrivilege.jsp</result>
+        </global-results>
+        
+		<!-- 岗位管理Action -->
+		<action name="bookAction" class="bookAction"></action>
+		<!-- 注意该处的class为spring-struts2插件的配置方式 -->
+		<action name="role_*" class="roleAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/role/list.jsp</result>
+			<result name="toList" type="redirectAction">
+				<param name="actionName">role_list</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="addUI">/WEB-INF/jsp/role/save.jsp</result>
+			<result name="editUI">/WEB-INF/jsp/role/save.jsp</result>
+			<result name="setPrivilegeUI">/WEB-INF/jsp/role/setPrivilegeUI.jsp</result>
+		</action>
+
+		<!-- 部门管理Action -->
+		<action name="department_*" class="departmentAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/department/list.jsp</result>
+			<result name="toList" type="redirectAction">
+				<!-- 传入parentId参数保证添加或修改会显示出相应的子部门 -->
+				<param name="actionName">department_list?parentId=${parentId}</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="addUI">/WEB-INF/jsp/department/save.jsp</result>
+			<result name="editUI">/WEB-INF/jsp/department/save.jsp</result>
+		</action>
+		
+		<!-- 用户管理Action -->
+		<action name="user_*" class="userAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/user/list.jsp</result>
+			<result name="toList" type="redirectAction">
+				<param name="actionName">user_list</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="addUI">/WEB-INF/jsp/user/save.jsp</result>
+			<result name="editUI">/WEB-INF/jsp/user/save.jsp</result>
+			<result name="home">/WEB-INF/jsp/home/index.jsp</result>
+		</action>
+		
+		<!-- 主页Action -->
+		<action name="home_*" class="homeAction" method="{1}">
+			<result name="{1}">/WEB-INF/jsp/home/{1}.jsp</result>
+		</action>
+		 
+		<!-- 板块管理Action -->
+		<action name="forumManage_*" class="forumManageAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/forumManage/list.jsp</result>
+			<result name="toList" type="redirectAction">
+				<param name="actionName">forumManage_list</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="addUI">/WEB-INF/jsp/forumManage/save.jsp</result>
+			<result name="editUI">/WEB-INF/jsp/forumManage/save.jsp</result>
+		</action>
+		
+		<!-- 论坛Action -->
+		<action name="forum_*" class="forumAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/forum/list.jsp</result>
+			<result name="forumShow">/WEB-INF/jsp/forum/show.jsp</result>
+		</action>
+		
+		<!-- 主题操作Action -->
+		<action name="topic_*" class="topicAction" method="{1}">
+			<result name="addUI">/WEB-INF/jsp/topic/add.jsp</result>
+			<result name="toTopicList" type="redirectAction">
+				<param name="actionName">forum_show?id=${forumId}</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="show">/WEB-INF/jsp/topic/show.jsp</result>
+		</action>
+		
+		<!-- 回复Action -->
+		<action name="reply_*" class="replyAction" method="{1}">
+			<result name="toReplyList" type="redirectAction">
+				<param name="actionName">topic_show?id=${topicId}</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="addUI" >/WEB-INF/jsp/reply/add.jsp</result>
+		</action>
+		
+		<!-- 流程定义管理Action -->
+		<action name="processDefinition_*" class="processDefinitionAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/processDefinition/list.jsp</result>
+			<result name="addUI">/WEB-INF/jsp/processDefinition/add.jsp</result>
+			<result name="toList" type="redirectAction">
+				<param name="actionName">processDefinition_list</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="showImage" type="stream">
+				<param name="inputName">inputStream</param>
+				<param name="contentType">image/png</param>
+			</result>
+		</action> 
+		
+		<!-- 模板管理Action -->
+		<action name="template_*" class="templateAction" method="{1}">
+			<result name="list">/WEB-INF/jsp/template/list.jsp</result>
+			<result name="addUI">/WEB-INF/jsp/template/save.jsp</result>
+			<result name="toList" type="redirectAction">
+				<param name="actionName">template_list</param>
+				<param name="namespace">/</param>
+			</result>
+			<result name="editUI">/WEB-INF/jsp/template/save.jsp</result>
+			<result name="download" type="stream">
+				<param name="inputName">inputStream</param>
+				<param name="contentType">application/octet-stream</param>
+				<param name="contentDisposition">attachment;filename="${fileName}"</param>
+			</result>
+		</action>
+		
+		<!-- 流转Action -->
+		<action name="flow_*" class="flowAction" method="{1}">
+			<result name="templateList">/WEB-INF/jsp/flow/templateList.jsp</result>
+			<result name="submitUI">/WEB-INF/jsp/flow/submitUI.jsp</result>
+			<result name="myApplicationList">/WEB-INF/jsp/flow/myApplicationList.jsp</result>
+			<result name="toMyApplicationList" type="redirectAction">
+    			<param name="actionName">flow_myApplicationList</param>
+    			<param name="namespace">/</param>
+    		</result>
+    		<result name="download" type="stream">
+    			<param name="inputName">inputStream</param>
+    			<param name="contentDisposition">attachment;filename="${fileName}"</param>
+    		</result>
+    		<result name="historyApprovedList">/WEB-INF/jsp/flow/historyApprovedList.jsp</result>
+    		<result name="myTaskList">/WEB-INF/jsp/flow/myTaskList.jsp</result>
+    		<result name="approveUI">/WEB-INF/jsp/flow/approveUI.jsp</result>
+    		<result name="toMyTaskList" type="redirectAction">
+    			<param name="actionName">flow_myTaskList</param>
+    			<param name="namespace">/</param>
+    		</result>
+		</action>
+	</package>
+</struts>
